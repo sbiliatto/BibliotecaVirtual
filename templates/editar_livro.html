@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Livro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="caixa">
+        <h1> Editar Livro </h1>
+        <form method="POST">
+            <input type="text" name="titulo" value="{{ livro[1] }}" required>
+            <input type="text" name="autor" value="{{ livro[2] }}" required>
+            <input type="number" name="ano" value="{{ livro[3] }}" required>
+            <input type="date" name="data" value="{{livro[4]}}" required>
+            <button class="botao cheio" type="submit">Emprestar</button>
+            <a class="botao cancelar cheio" href="/">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>
