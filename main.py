@@ -1,86 +1,94 @@
-from flask import Flask, request, redirect, render_template, flash
+from flask import Flask, render_template, request, redirect
 from datetime import datetime, timedelta
 
+
 app = Flask(__name__)
-app.secret_key = 'minha_chave_secreta'
+app.secret_key = 'minha_chave'
 
 livros = []
-emprestimos = {}
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', livros=livros, emprestimos=emprestimos)
+    return render_template('index.html', livros=livros)
 
 
-@app.route('/adicionar_livro', methods=['GET', 'POST'])
-def adicionar_livro():
+@app.route('/adicionar', methods=['GET', 'POST'])
+def adicionar():
     if request.method == 'POST':
-        titulo = request.form['titulo']
-        autor = request.form['autor']
-        ano = request.form['ano']
         codigo = len(livros)
-        livros.append([codigo, titulo, autor, ano])
-        flash('Livro adicionado com sucesso!')
+        novo_livro = {
+            "codigo" : codigo,
+            "titulo": request.form['titulo'],
+            "autor": request.form['autor'],
+            "ano": request.form['ano'],
+            "emprestado": False,
+            "data_devolucao": None,
+            "atrasado": False,
+            "multa": 0
+        }
+        livros.append(novo_livro)
         return redirect('/')
     return render_template('adicionar_livro.html')
 
+@app.route('/editar/<int:codigo>', methods=['GET', 'POST'])
+def editar(codigo):
+    livro_encontrado = None
+    for livro in livros:
+        if livro['codigo'] == codigo:
+            livro_encontrado = livro
+            break
 
-@app.route('/editar_livro/<int:codigo>', methods=['GET', 'POST'])
-def editar_livro(codigo):
-    if request.method == 'POST':
-        titulo = request.form['titulo']
-        autor = request.form['autor']
-        ano = request.form['ano']
-        livros[codigo] = [codigo, titulo, autor, ano]
-        flash('Livro editado com sucesso!!')
+    if not livro_encontrado:
         return redirect('/')
 
-    livro = livros[codigo]
-    return render_template('editar_livro.html', livro=livro)
+    if request.method == 'POST':
+        livro_encontrado['titulo'] = request.form['titulo']
+        livro_encontrado['autor'] = request.form['autor']
+        livro_encontrado['ano'] = request.form['ano']
+        return redirect('/')
+
+    return render_template('editar_livro.html', livro=livro_encontrado)
 
 
-@app.route('/apagar_livro/<int:codigo>')
-def apagar_livro(codigo):
-    del livros[codigo]
-    if codigo in emprestimos:
-        del emprestimos[codigo]
-    flash('Livro excluído com sucesso!!')
+@app.route('/excluir/<string:titulo>')
+def excluir(titulo):
+    global livros
+    livros = [livro for livro in livros if livro['titulo'] != titulo]
     return redirect('/')
 
 
-@app.route('/emprestar_livro/<int:codigo>')
-def emprestar_livro(codigo):
-    data_emprestimo = datetime.now()
-    data_devolucao = datetime.now() + timedelta(days = 7).strftime('%d/%m/%y')
-
-    emprestimos[codigo] = {
-        'data_emprestimo': data_emprestimo,
-        'data_devolucao': data_devolucao,
-    }
-
-    flash(f'Livro emprestado com sucesso! Data de devolução: {data_devolucao}')
+@app.route('/emprestar/<string:titulo>')
+def emprestar(titulo):
+    for livro in livros:
+        if livro['titulo'] == titulo:
+            livro['emprestado'] = True
+            livro['data_devolucao'] = (datetime.now() + timedelta(days=7)).strftime('%d/%m/%Y')
+            livro['atrasado'] = False
+            livro['multa'] = 0
     return redirect('/')
 
 
-@app.route('/devolver_livro/<int:codigo>')
-def devolver_livro(codigo):
-    if codigo in emprestimos:
-        emprestimo = emprestimos[codigo]
-        data_atual = datetime.now()
-        data_devolucao = datetime.now() + timedelta(days = 7).strftime('%d/%m/%y')
+@app.route('/devolver/<string:titulo>')
+def devolver(titulo):
+    for livro in livros:
+        if livro['titulo'] == titulo:
+            data_devolucao = datetime.strptime(livro['data_devolucao'], '%d/%m/%Y')
+            if datetime.now() > data_devolucao:
+                dias_atraso = (datetime.now() - data_devolucao).days
+                livro['multa'] = 10 + (10 * 0.01 * dias_atraso)
+                livro['atrasado'] = True
+            else:
+                livro['atrasado'] = False
+                livro['multa'] = 0
 
-        if data_atual > data_devolucao:
-            dias_atraso = (data_atual - data_devolucao).days
-            multa = 10 + (0.01 * dias_atraso * 10)
-            flash(f'Livro devolvido com atraso de {dias_atraso} dias. Multa: R${multa:.2f}')
-        else:
-            flash('Livro devolvido com sucesso!')
+            livro['emprestado'] = False
 
+            return render_template('devolver.html',
+                                livro=livro,
+                                datetime=datetime)
 
     return redirect('/')
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)

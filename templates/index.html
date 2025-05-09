@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <title>Biblioteca Virtual</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
+
 </head>
+
 <body>
-    <div class="container">
-        <h1> Empréstimo de livros</h1>
-          <!-- MENSAGENS FLASH -->
-            {% with mensagens = get_flashed_messages() %}
-              {% if mensagens %}
-                <ul class="mensagens">
-                  {% for msg in mensagens %}
-                    <li>{{ msg }}</li>
-                  {% endfor %}
-                </ul>
-              {% endif %}
-            {% endwith %}
+    <h1>Biblioteca Virtual</h1>
 
-        <a class="botao" href="/adicionar_livro">+ Adicionar Livros</a>
+    {% if mensagem %}
+        <div class="mensagem">{{ mensagem }}</div>
+    {% endif %}
 
-        <table>
-            <tr>
-                <th>Nome</th>
-                <th>Autor</th>
-                <th>Ano</th>
-                <th>Empréstimo</th>
-            </tr>
-            {% for livro in livros %}
-            <tr>
-                <td>{ livro }</td>
-                <td>{ livro }</td>
-                <td>{{livro[3]}}</td>
-                <td>{ {% set codigo = livro[0] %}
-                        {% if codigo in emprestimos %}
+    <a href="/adicionar"><button>Adicionar Livro</button></a>
 
-                <td>
-                    <a class="botao pequeno" href="/editar_livro/{{ livro[0] }}">Editar</a>
-                    <a class="botao vermelho pequeno" href="/apagar_livro/{{ livro[0] }}">Apagar</a>
-                </td>
-            </tr>
-             {% endfor %}
-        </table>
-    </div>
+    <table>
+        <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Ano</th>
+            <th>Ações</th>
+        </tr>
+        {% for livro in livros %}
+        <tr>
+            <td>{{ livro.titulo }}</td>
+            <td>{{ livro.autor }}</td>
+            <td>{{ livro.ano }}</td>
+            <td>
+                <a href="/editar/{{ livro.codigo }}"><button>Editar</button></a>
+                <a href="/excluir/{{ livro.codigo }}"><button class="vermelho">Excluir</button></a>
+
+                {% if livro.emprestado %}
+                    <a href="/devolver/{{ livro.titulo }}"><button class="verde">Devolver</button></a>
+                    <span>(Devolver até: {{ livro.data_devolucao }})</span>
+                    {% if livro.atrasado %}
+                        <span>Multa: R$ {{ livro.multa }}</span>
+                    {% endif %}
+                {% else %}
+                    <a href="/emprestar/{{ livro.titulo }}"><button>Emprestar</button></a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>

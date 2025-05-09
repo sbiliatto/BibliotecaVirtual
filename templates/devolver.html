@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Devolução de Livro</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+<body>
+    <div class="container">
+        <h1>Devolução de Livro</h1>
+
+        {% if livro.atrasado %}
+            <div>
+                <h3>Devolução com atraso!</h3>
+                <p>Dias de atraso: {{ (datetime.now() - datetime.strptime(livro.data_devolucao, '%d/%m/%Y')).days }}</p>
+                <p>Multa: R$ {{ "%.2f"(livro.multa) }}</p>
+            </div>
+        {% else %}
+            <p>Devolvido dentro do prazo</p>
+        {% endif %}
+
+        <p><strong>Livro:</strong> {{ livro.titulo }}</p>
+        <p><strong>Data limite:</strong> {{ livro.data_devolucao }}</p>
+        <p><strong>Data da devolução:</strong> {{ datetime.now().strftime('%d/%m/%Y') }}</p>
+
+        <br>
+        <a href="/">Voltar para a lista de livros</a>
+    </div>
+</body>
+</html>
